@@ -1,0 +1,86 @@
+<%- include('../layouts/header') %>
+
+<div class="container-fluid p-0" style="max-width: 800px;">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Tạo Dự Án Mới</h3>
+      <p class="text-muted small mb-0">Thiết lập thông tin ban đầu cho dự án của nhóm</p>
+    </div>
+    <a href="/projects" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Quay lại
+    </a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <form action="/projects/create" method="POST">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="code" class="form-label fw-semibold">Mã dự án (Code) *</label>
+            <input type="text" class="form-control" id="code" name="code" placeholder="VD: PRJ-WEB, APP-01" required style="text-transform: uppercase;">
+            <div class="form-text">Mã định danh duy nhất cho dự án</div>
+          </div>
+          <div class="col-md-8">
+            <label for="name" class="form-label fw-semibold">Tên dự án *</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="VD: Nâng cấp Cổng thông tin 2026" required>
+          </div>
+
+          <div class="col-12">
+            <label for="description" class="form-label fw-semibold">Mô tả dự án</label>
+            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Mục tiêu, phạm vi và yêu cầu của dự án..."></textarea>
+          </div>
+
+          <div class="col-md-6">
+            <label for="status" class="form-label fw-semibold">Trạng thái khởi tạo</label>
+            <select class="form-select" id="status" name="status">
+              <option value="planning" selected>Đang lập kế hoạch (Planning)</option>
+              <option value="in_progress">Đang triển khai (In Progress)</option>
+              <option value="on_hold">Tạm dừng (On Hold)</option>
+              <option value="completed">Đã hoàn tất (Completed)</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="priority" class="form-label fw-semibold">Mức độ ưu tiên</label>
+            <select class="form-select" id="priority" name="priority">
+              <option value="low">Thấp (Low)</option>
+              <option value="medium" selected>Trung bình (Medium)</option>
+              <option value="high">Cao (High)</option>
+              <option value="urgent">Khẩn cấp (Urgent)</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="start_date" class="form-label fw-semibold">Ngày bắt đầu</label>
+            <input type="date" class="form-control" id="start_date" name="start_date">
+          </div>
+
+          <div class="col-md-6">
+            <label for="end_date" class="form-label fw-semibold">Hạn chót dự kiến</label>
+            <input type="date" class="form-control" id="end_date" name="end_date">
+          </div>
+
+          <div class="col-md-12">
+            <label for="budget" class="form-label fw-semibold">Ngân sách dự kiến (VNĐ)</label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="budget" name="budget" placeholder="0" min="0" step="1000000">
+              <span class="input-group-text">VNĐ</span>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-end gap-2">
+          <a href="/projects" class="btn btn-outline-secondary">Hủy bỏ</a>
+          <button type="submit" class="btn btn-primary px-4 fw-semibold">
+            <i class="bi bi-check2-circle me-1"></i> Lưu Dự Án
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>
+

@@ -1,0 +1,103 @@
+<%- include('../layouts/header') %>
+
+<div class="container-fluid p-0" style="max-width: 800px;">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Chỉnh Sửa Công Việc</h3>
+      <p class="text-muted small mb-0">Cập nhật công việc trong dự án: <%= task.project_code %></p>
+    </div>
+    <a href="/tasks/<%= task.id %>" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Xem chi tiết
+    </a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <form action="/tasks/<%= task.id %>/edit" method="POST">
+        <input type="hidden" name="redirect_to" value="/tasks/<%= task.id %>">
+        
+        <div class="row g-3">
+          <div class="col-md-12">
+            <label for="project_id" class="form-label fw-semibold">Dự án</label>
+            <select class="form-select" id="project_id" name="project_id" required>
+              <% projects.forEach(p => { %>
+                <option value="<%= p.id %>" <%= task.project_id === p.id ? 'selected' : '' %>>
+                  [<%= p.code %>] <%= p.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label for="title" class="form-label fw-semibold">Tiêu đề công việc *</label>
+            <input type="text" class="form-control" id="title" name="title" value="<%= task.title %>" required>
+          </div>
+
+          <div class="col-12">
+            <label for="description" class="form-label fw-semibold">Mô tả công việc</label>
+            <textarea class="form-control" id="description" name="description" rows="4"><%= task.description || '' %></textarea>
+          </div>
+
+          <div class="col-md-6">
+            <label for="status" class="form-label fw-semibold">Trạng thái</label>
+            <select class="form-select" id="status" name="status">
+              <option value="todo" <%= task.status === 'todo' ? 'selected' : '' %>>Chờ làm (To Do)</option>
+              <option value="in_progress" <%= task.status === 'in_progress' ? 'selected' : '' %>>Đang làm (In Progress)</option>
+              <option value="review" <%= task.status === 'review' ? 'selected' : '' %>>Chờ duyệt (Review)</option>
+              <option value="done" <%= task.status === 'done' ? 'selected' : '' %>>Hoàn thành (Done)</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="priority" class="form-label fw-semibold">Độ ưu tiên</label>
+            <select class="form-select" id="priority" name="priority">
+              <option value="low" <%= task.priority === 'low' ? 'selected' : '' %>>Thấp</option>
+              <option value="medium" <%= task.priority === 'medium' ? 'selected' : '' %>>Trung bình</option>
+              <option value="high" <%= task.priority === 'high' ? 'selected' : '' %>>Cao</option>
+              <option value="urgent" <%= task.priority === 'urgent' ? 'selected' : '' %>>Khẩn cấp</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="assigned_to" class="form-label fw-semibold">Giao việc cho</label>
+            <select class="form-select" id="assigned_to" name="assigned_to">
+              <option value="">-- Chưa giao ai --</option>
+              <% users.forEach(u => { %>
+                <option value="<%= u.id %>" <%= task.assigned_to === u.id ? 'selected' : '' %>>
+                  <%= u.name %> (<%= u.department %>)
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="progress" class="form-label fw-semibold">Tiến độ (%)</label>
+            <input type="number" class="form-control" id="progress" name="progress" min="0" max="100" value="<%= task.progress || 0 %>">
+          </div>
+
+          <div class="col-md-6">
+            <label for="start_date" class="form-label fw-semibold">Ngày bắt đầu</label>
+            <input type="date" class="form-control" id="start_date" name="start_date" value="<%= task.start_date ? new Date(task.start_date).toISOString().split('T')[0] : '' %>">
+          </div>
+
+          <div class="col-md-6">
+            <label for="due_date" class="form-label fw-semibold">Hạn hoàn thành</label>
+            <input type="date" class="form-control" id="due_date" name="due_date" value="<%= task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '' %>">
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-end gap-2">
+          <a href="/tasks/<%= task.id %>" class="btn btn-outline-secondary">Hủy bỏ</a>
+          <button type="submit" class="btn btn-primary px-4 fw-semibold">
+            <i class="bi bi-check2-circle me-1"></i> Cập Nhật Công Việc
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>
+

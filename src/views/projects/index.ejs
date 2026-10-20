@@ -1,0 +1,156 @@
+<%- include('../layouts/header') %>
+
+<div class="container-fluid p-0">
+  <!-- Page Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Danh Sách Dự Án</h3>
+      <p class="text-muted small mb-0">Quản lý và giám sát tất cả các dự án trong hệ thống</p>
+    </div>
+    <div>
+      <% if (currentUser.role === 'admin' || currentUser.role === 'manager') { %>
+        <a href="/projects/create" class="btn btn-primary d-flex align-items-center gap-1 shadow-sm">
+          <i class="bi bi-plus-lg"></i>
+          <span>Tạo Dự Án Mới</span>
+        </a>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body p-3">
+      <form action="/projects" method="GET" class="row g-2 align-items-center">
+        <div class="col-12 col-md-5">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" name="search" class="form-control border-start-0" placeholder="Tìm theo tên dự án, mã..." value="<%= searchTerm %>">
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="all" <%= currentStatus === 'all' ? 'selected' : '' %>>Tất cả trạng thái</option>
+            <option value="planning" <%= currentStatus === 'planning' ? 'selected' : '' %>>Đang lập kế hoạch</option>
+            <option value="in_progress" <%= currentStatus === 'in_progress' ? 'selected' : '' %>>Đang triển khai</option>
+            <option value="completed" <%= currentStatus === 'completed' ? 'selected' : '' %>>Đã hoàn tất</option>
+            <option value="on_hold" <%= currentStatus === 'on_hold' ? 'selected' : '' %>>Tạm dừng</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-primary flex-grow-1">Lọc</button>
+          <% if (searchTerm || currentStatus !== 'all') { %>
+            <a href="/projects" class="btn btn-outline-secondary" title="Đặt lại bộ lọc"><i class="bi bi-arrow-counterclockwise"></i></a>
+          <% } %>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Projects List Grid / Cards -->
+  <% if (projects && projects.length > 0) { %>
+    <div class="row g-3">
+      <% projects.forEach(p => { %>
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="card shadow-sm h-100 border">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge bg-secondary-subtle text-secondary border font-monospace"><%= p.code %></span>
+                <div>
+                  <% if (p.status === 'in_progress') { %>
+                    <span class="badge badge-status-in_progress">Đang chạy</span>
+                  <% } else if (p.status === 'planning') { %>
+                    <span class="badge badge-status-planning">Kế hoạch</span>
+                  <% } else if (p.status === 'completed') { %>
+                    <span class="badge badge-status-completed">Hoàn tất</span>
+                  <% } else { %>
+                    <span class="badge badge-status-on_hold">Tạm dừng</span>
+                  <% } %>
+
+                  <% if (p.priority === 'urgent') { %>
+                    <span class="badge badge-priority-urgent">Khẩn cấp</span>
+                  <% } else if (p.priority === 'high') { %>
+                    <span class="badge badge-priority-high">Cao</span>
+                  <% } %>
+                </div>
+              </div>
+
+              <h5 class="card-title fw-bold mt-1">
+                <a href="/projects/<%= p.id %>" class="text-dark text-decoration-none">
+                  <%= p.name %>
+                </a>
+              </h5>
+              
+              <p class="card-text text-muted small flex-grow-1 mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                <%= p.description || 'Chưa có mô tả chi tiết cho dự án này.' %>
+              </p>
+
+              <!-- Progress -->
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small text-muted mb-1">
+                  <span>Tiến độ</span>
+                  <span class="fw-semibold"><%= p.completed_tasks %>/<%= p.total_tasks %> tasks (<%= p.progress %>%)</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar <%= p.progress === 100 ? 'bg-success' : 'bg-primary' %>" role="progressbar" style="width: <%= p.progress %>%;"></div>
+                </div>
+              </div>
+
+              <!-- Metadata info -->
+              <div class="d-flex justify-content-between align-items-center text-muted small border-top pt-2 mt-auto">
+                <div>
+                  <i class="bi bi-people me-1"></i><%= p.total_members %> thành viên
+                </div>
+                <div>
+                  <% if (p.end_date) { %>
+                    <i class="bi bi-calendar-event me-1"></i><%= new Date(p.end_date).toLocaleDateString('vi-VN') %>
+                  <% } else { %>
+                    <span class="text-secondary">Chưa đặt hạn</span>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer bg-light border-top-0 d-flex justify-content-between align-items-center py-2 px-3">
+              <a href="/projects/<%= p.id %>" class="btn btn-sm btn-outline-primary fw-medium">
+                <i class="bi bi-eye me-1"></i> Xem chi tiết
+              </a>
+
+              <% if (currentUser.role === 'admin' || currentUser.role === 'manager') { %>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><a class="dropdown-item" href="/projects/<%= p.id %>/edit"><i class="bi bi-pencil me-2"></i> Chỉnh sửa</a></li>
+                    <% if (currentUser.role === 'admin') { %>
+                      <li>
+                        <form action="/projects/<%= p.id %>/delete" method="POST" data-confirm="Bạn có chắc muốn xóa dự án <%= p.name %>? Tất cả các tasks thuộc dự án sẽ bị xóa.">
+                          <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i> Xóa dự án</button>
+                        </form>
+                      </li>
+                    <% } %>
+                  </ul>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="card p-5 text-center shadow-sm">
+      <div class="text-muted">
+        <i class="bi bi-folder-x fs-1 d-block mb-3 text-secondary"></i>
+        <h5>Không tìm thấy dự án nào</h5>
+        <p class="small">Hãy thử tìm kiếm với từ khóa khác hoặc tạo dự án mới.</p>
+        <% if (currentUser.role === 'admin' || currentUser.role === 'manager') { %>
+          <a href="/projects/create" class="btn btn-primary mt-2">
+            <i class="bi bi-plus-lg me-1"></i> Tạo Dự Án Mới
+          </a>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../layouts/footer') %>

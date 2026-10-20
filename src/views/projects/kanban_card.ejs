@@ -1,0 +1,106 @@
+<% 
+  const canChangeStatus = currentUser.role === 'admin' || currentUser.role === 'manager' || task.assigned_to === currentUser.id || task.created_by === currentUser.id;
+  const canEdit = currentUser.role === 'admin' || currentUser.role === 'manager' || task.created_by === currentUser.id;
+  const canDelete = currentUser.role === 'admin' || currentUser.role === 'manager' || task.created_by === currentUser.id;
+%>
+<div class="kanban-card">
+  <div class="d-flex justify-content-between align-items-start mb-2">
+    <div>
+      <% if (task.priority === 'urgent') { %>
+        <span class="badge badge-priority-urgent">Khẩn cấp</span>
+      <% } else if (task.priority === 'high') { %>
+        <span class="badge badge-priority-high">Cao</span>
+      <% } else if (task.priority === 'medium') { %>
+        <span class="badge badge-priority-medium">Trung bình</span>
+      <% } else { %>
+        <span class="badge badge-priority-low">Thấp</span>
+      <% } %>
+    </div>
+    
+    <div class="dropdown">
+      <button class="btn btn-sm btn-light p-0 border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-three-dots-vertical text-muted"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+        <li><a class="dropdown-item small" href="/tasks/<%= task.id %>"><i class="bi bi-eye me-1"></i> Chi tiết & Trao đổi</a></li>
+        
+        <% if (canEdit) { %>
+          <li><a class="dropdown-item small" href="/tasks/<%= task.id %>/edit"><i class="bi bi-pencil me-1"></i> Chỉnh sửa</a></li>
+        <% } %>
+
+        <% if (canDelete) { %>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form action="/tasks/<%= task.id %>/delete" method="POST" data-confirm="Xác nhận xóa task này?">
+              <input type="hidden" name="redirect_to" value="/projects/<%= projectId %>">
+              <button type="submit" class="dropdown-item small text-danger"><i class="bi bi-trash me-1"></i> Xóa task</button>
+            </form>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+
+  <h6 class="fw-bold mb-2">
+    <a href="/tasks/<%= task.id %>" class="text-dark text-decoration-none">
+      <%= task.title %>
+    </a>
+  </h6>
+
+  <% if (task.description) { %>
+    <p class="text-muted small mb-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.8rem;">
+      <%= task.description %>
+    </p>
+  <% } %>
+
+  <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
+    <!-- Assignee -->
+    <div class="d-flex align-items-center gap-1">
+      <% if (task.assignee_name) { %>
+        <div class="avatar-circle" style="width: 24px; height: 24px; font-size: 0.7rem;" title="Phụ trách: <%= task.assignee_name %>">
+          <%= task.assignee_name.charAt(0).toUpperCase() %>
+        </div>
+        <span class="text-muted <%= task.assigned_to === currentUser.id ? 'fw-bold text-primary' : '' %>" style="font-size: 0.75rem;">
+          <%= task.assignee_name.split(' ').pop() %> <%= task.assigned_to === currentUser.id ? '(Tôi)' : '' %>
+        </span>
+      <% } else { %>
+        <span class="text-muted" style="font-size: 0.75rem;">Chưa giao</span>
+      <% } %>
+    </div>
+
+    <!-- Due date & Comments -->
+    <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 0.75rem;">
+      <% if (task.comments_count > 0) { %>
+        <span title="<%= task.comments_count %> bình luận"><i class="bi bi-chat-left-dots"></i> <%= task.comments_count %></span>
+      <% } %>
+
+      <% if (task.due_date) { %>
+        <% const isOverdue = new Date(task.due_date) < new Date() && task.status !== 'done'; %>
+        <span class="<%= isOverdue ? 'text-danger fw-bold' : '' %>" title="Hạn chót: <%= new Date(task.due_date).toLocaleDateString('vi-VN') %>">
+          <i class="bi bi-calendar <%= isOverdue ? 'bi-exclamation-circle' : '' %>"></i>
+          <%= new Date(task.due_date).toLocaleDateString('vi-VN', { month: 'numeric', day: 'numeric' }) %>
+        </span>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Quick Move Action -->
+  <div class="mt-2 pt-2 border-top d-flex align-items-center justify-content-between">
+    <span class="text-muted" style="font-size: 0.7rem;">Trạng thái:</span>
+    <% if (canChangeStatus) { %>
+      <form action="/tasks/<%= task.id %>/status" method="POST" class="d-inline">
+        <input type="hidden" name="redirect_to" value="/projects/<%= projectId %>">
+        <select name="status" onchange="this.form.submit()" class="form-select form-select-sm py-0 px-2" style="font-size: 0.75rem; width: auto;">
+          <option value="todo" <%= task.status === 'todo' ? 'selected' : '' %>>To Do</option>
+          <option value="in_progress" <%= task.status === 'in_progress' ? 'selected' : '' %>>In Progress</option>
+          <option value="review" <%= task.status === 'review' ? 'selected' : '' %>>Review</option>
+          <option value="done" <%= task.status === 'done' ? 'selected' : '' %>>Done</option>
+        </select>
+      </form>
+    <% } else { %>
+      <span class="badge bg-light text-secondary border" style="font-size: 0.7rem;">
+        <%= task.status.toUpperCase() %>
+      </span>
+    <% } %>
+  </div>
+</div>

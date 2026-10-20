@@ -1,0 +1,218 @@
+<%- include('../layouts/header') %>
+
+<div class="container-fluid p-0">
+  <!-- Welcome Banner -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="h4 fw-bold mb-1">Xin chào, <%= currentUser.name %>! 👋</h2>
+      <p class="text-muted small mb-0">Đây là tổng quan tiến độ các dự án và công việc gần nhất của bạn.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <% if (currentUser.role === 'admin' || currentUser.role === 'manager') { %>
+        <a href="/projects/create" class="btn btn-primary d-flex align-items-center gap-1 shadow-sm">
+          <i class="bi bi-plus-lg"></i>
+          <span>Tạo Dự án</span>
+        </a>
+        <a href="/tasks/create" class="btn btn-outline-primary d-flex align-items-center gap-1 shadow-sm">
+          <i class="bi bi-check2-square"></i>
+          <span>Thêm Task</span>
+        </a>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card shadow-sm h-100">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold text-uppercase">Tổng số Dự án</div>
+            <div class="fs-3 fw-bold text-dark mt-1"><%= projectStats.total_projects || 0 %></div>
+            <div class="small text-muted mt-1"><%= projectStats.in_progress || 0 %> đang triển khai</div>
+          </div>
+          <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-3">
+            <i class="bi bi-folder2 fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card border-warning shadow-sm h-100">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold text-uppercase">Task Đang làm</div>
+            <div class="fs-3 fw-bold text-dark mt-1"><%= taskStats.in_progress || 0 %></div>
+            <div class="small text-muted mt-1"><%= taskStats.todo || 0 %> việc đang chờ xử lý</div>
+          </div>
+          <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-3">
+            <i class="bi bi-hourglass-split fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card border-success shadow-sm h-100">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold text-uppercase">Task Hoàn thành</div>
+            <div class="fs-3 fw-bold text-dark mt-1"><%= taskStats.done || 0 %></div>
+            <div class="small text-success mt-1 fw-medium"><%= taskStats.review || 0 %> việc đang đợi duyệt</div>
+          </div>
+          <div class="p-3 bg-success bg-opacity-10 text-success rounded-3">
+            <i class="bi bi-check-circle fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card border-info shadow-sm h-100">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold text-uppercase">Thành viên Đội ngũ</div>
+            <div class="fs-3 fw-bold text-dark mt-1"><%= totalMembers || 0 %></div>
+            <div class="small text-muted mt-1">Toàn bộ nhân sự</div>
+          </div>
+          <div class="p-3 bg-info bg-opacity-10 text-info rounded-3">
+            <i class="bi bi-people fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- My Assigned Tasks -->
+    <div class="col-12 col-lg-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-person-check text-primary me-2"></i>Công việc được giao cho tôi</span>
+          <a href="/tasks?assignedTo=<%= currentUser.id %>" class="btn btn-sm btn-link text-decoration-none">Xem tất cả (<%= myTasks.length %>)</a>
+        </div>
+        <div class="card-body p-0">
+          <% if (myTasks && myTasks.length > 0) { %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                  <tr>
+                    <th>Tiêu đề việc</th>
+                    <th>Dự án</th>
+                    <th>Hạn chót</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% myTasks.forEach(task => { %>
+                    <tr>
+                      <td>
+                        <a href="/tasks/<%= task.id %>" class="fw-semibold text-decoration-none text-dark">
+                          <%= task.title %>
+                        </a>
+                      </td>
+                      <td>
+                        <span class="badge bg-light text-secondary border"><%= task.project_code %></span>
+                      </td>
+                      <td class="small text-muted">
+                        <% if (task.due_date) { %>
+                          <%= new Date(task.due_date).toLocaleDateString('vi-VN') %>
+                        <% } else { %>
+                          --
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (task.status === 'todo') { %>
+                          <span class="badge badge-task-todo">Chờ làm</span>
+                        <% } else if (task.status === 'in_progress') { %>
+                          <span class="badge badge-task-in_progress">Đang làm</span>
+                        <% } else if (task.status === 'review') { %>
+                          <span class="badge badge-task-review">Chờ duyệt</span>
+                        <% } else if (task.status === 'done') { %>
+                          <span class="badge badge-task-done">Hoàn thành</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <!-- Quick status change form -->
+                        <form action="/tasks/<%= task.id %>/status" method="POST" class="d-inline">
+                          <input type="hidden" name="redirect_to" value="/dashboard">
+                          <select name="status" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto; font-size: 0.8rem;">
+                            <option value="todo" <%= task.status === 'todo' ? 'selected' : '' %>>Chờ làm</option>
+                            <option value="in_progress" <%= task.status === 'in_progress' ? 'selected' : '' %>>Đang làm</option>
+                            <option value="review" <%= task.status === 'review' ? 'selected' : '' %>>Chờ duyệt</option>
+                            <option value="done" <%= task.status === 'done' ? 'selected' : '' %>>Hoàn thành</option>
+                          </select>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-emoji-smile fs-2 text-secondary mb-2 d-block"></i>
+              Bạn hiện không có công việc nào đang chờ thực hiện.
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Projects -->
+    <div class="col-12 col-lg-5">
+      <div class="card shadow-sm h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-folder-check text-success me-2"></i>Tiến độ Dự án</span>
+          <a href="/projects" class="btn btn-sm btn-link text-decoration-none">Tất cả dự án</a>
+        </div>
+        <div class="card-body">
+          <% if (recentProjects && recentProjects.length > 0) { %>
+            <div class="d-flex flex-column gap-3">
+              <% recentProjects.forEach(project => { %>
+                <div class="border rounded p-3">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <a href="/projects/<%= project.id %>" class="fw-bold text-dark text-decoration-none">
+                        <%= project.name %>
+                      </a>
+                      <div class="small text-muted"><%= project.code %> &bull; <%= project.total_members %> thành viên</div>
+                    </div>
+                    <div>
+                      <% if (project.status === 'in_progress') { %>
+                        <span class="badge badge-status-in_progress">Đang chạy</span>
+                      <% } else if (project.status === 'planning') { %>
+                        <span class="badge badge-status-planning">Lập kế hoạch</span>
+                      <% } else if (project.status === 'completed') { %>
+                        <span class="badge badge-status-completed">Hoàn tất</span>
+                      <% } else { %>
+                        <span class="badge badge-status-on_hold">Tạm dừng</span>
+                      <% } %>
+                    </div>
+                  </div>
+                  <!-- Progress Bar -->
+                  <div class="d-flex align-items-center gap-2 mt-2">
+                    <div class="progress flex-grow-1" style="height: 8px;">
+                      <div class="progress-bar bg-primary" role="progressbar" style="width: <%= project.progress %>%;" aria-valuenow="<%= project.progress %>" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <span class="small fw-semibold text-muted" style="min-width: 38px;"><%= project.progress %>%</span>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <div class="text-center py-5 text-muted">
+              <p>Chưa có dự án nào được tạo.</p>
+              <a href="/projects/create" class="btn btn-sm btn-primary">Tạo dự án đầu tiên</a>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>
+

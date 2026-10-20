@@ -1,0 +1,217 @@
+<%- include('../layouts/header') %>
+
+<div class="container-fluid p-0" style="max-width: 900px;">
+  <!-- Header / Back button -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center gap-2">
+      <a href="/projects/<%= task.project_id %>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Dự án [<%= task.project_code %>]
+      </a>
+      <span class="text-muted">/</span>
+      <span class="text-muted small">Chi tiết task</span>
+    </div>
+    <div class="d-flex gap-2">
+      <% if (currentUser.role === 'admin' || currentUser.role === 'manager' || task.created_by === currentUser.id) { %>
+        <a href="/tasks/<%= task.id %>/edit" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-pencil me-1"></i> Sửa công việc
+        </a>
+        <form action="/tasks/<%= task.id %>/delete" method="POST" data-confirm="Bạn chắc chắn muốn xóa task này?">
+          <input type="hidden" name="redirect_to" value="/projects/<%= task.project_id %>">
+          <button type="submit" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-trash me-1"></i> Xóa
+          </button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Task Info -->
+    <div class="col-12 col-md-8">
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="badge bg-secondary-subtle text-secondary border font-monospace"><%= task.project_code %></span>
+            
+            <% if (task.priority === 'urgent') { %>
+              <span class="badge badge-priority-urgent">Khẩn cấp</span>
+            <% } else if (task.priority === 'high') { %>
+              <span class="badge badge-priority-high">Cao</span>
+            <% } else if (task.priority === 'medium') { %>
+              <span class="badge badge-priority-medium">Trung bình</span>
+            <% } else { %>
+              <span class="badge badge-priority-low">Thấp</span>
+            <% } %>
+
+            <% if (task.status === 'todo') { %>
+              <span class="badge badge-task-todo">Chờ làm</span>
+            <% } else if (task.status === 'in_progress') { %>
+              <span class="badge badge-task-in_progress">Đang làm</span>
+            <% } else if (task.status === 'review') { %>
+              <span class="badge badge-task-review">Chờ duyệt</span>
+            <% } else if (task.status === 'done') { %>
+              <span class="badge badge-task-done">Hoàn thành</span>
+            <% } %>
+          </div>
+
+          <h3 class="fw-bold mb-3"><%= task.title %></h3>
+
+          <div class="mb-4">
+            <h6 class="fw-bold text-muted small text-uppercase mb-2">Mô tả công việc</h6>
+            <div class="p-3 bg-light rounded text-secondary" style="white-space: pre-wrap; line-height: 1.6;">
+              <%= task.description || 'Chưa có mô tả chi tiết cho công việc này.' %>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span class="fw-semibold">Tiến độ công việc</span>
+              <span class="fw-bold text-primary"><%= task.progress || 0 %>%</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar <%= task.progress === 100 ? 'bg-success' : 'bg-primary' %>" role="progressbar" style="width: <%= task.progress || 0 %>%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments / Discussion -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white d-flex align-items-center gap-2">
+          <i class="bi bi-chat-left-dots text-primary"></i>
+          <span class="fw-bold">Trao đổi & Bình luận (<%= task.comments ? task.comments.length : 0 %>)</span>
+        </div>
+        <div class="card-body p-4">
+          <!-- Comments List -->
+          <div class="d-flex flex-column gap-3 mb-4">
+            <% if (task.comments && task.comments.length > 0) { %>
+              <% task.comments.forEach(c => { %>
+                <div class="d-flex gap-3">
+                  <div class="avatar-circle bg-primary text-white flex-shrink-0">
+                    <%= c.user_name.charAt(0).toUpperCase() %>
+                  </div>
+                  <div class="flex-grow-1 bg-light p-3 rounded">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="fw-bold small"><%= c.user_name %></span>
+                      <span class="text-muted" style="font-size: 0.75rem;"><%= new Date(c.created_at).toLocaleString('vi-VN') %></span>
+                    </div>
+                    <p class="mb-0 text-secondary small" style="white-space: pre-wrap;"><%= c.content %></p>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <div class="text-center py-3 text-muted small">
+                Chưa có trao đổi nào. Hãy để lại bình luận đầu tiên bên dưới.
+              </div>
+            <% } %>
+          </div>
+
+          <!-- Add Comment Form -->
+          <form action="/tasks/<%= task.id %>/comments" method="POST">
+            <div class="mb-2">
+              <textarea class="form-control" name="content" rows="3" placeholder="Nhập bình luận hoặc cập nhật tiến độ công việc..." required></textarea>
+            </div>
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold">
+                <i class="bi bi-send me-1"></i> Gửi bình luận
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Meta & Quick Status -->
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-white fw-bold">Trạng thái công việc</div>
+        <div class="card-body">
+          <% 
+            const canChangeStatus = currentUser.role === 'admin' || currentUser.role === 'manager' || task.assigned_to === currentUser.id || task.created_by === currentUser.id;
+          %>
+          <% if (canChangeStatus) { %>
+            <form action="/tasks/<%= task.id %>/status" method="POST">
+              <input type="hidden" name="redirect_to" value="/tasks/<%= task.id %>">
+              <label for="statusSelect" class="form-label small text-muted">Thay đổi nhanh trạng thái:</label>
+              <select id="statusSelect" name="status" class="form-select mb-2" onchange="this.form.submit()">
+                <option value="todo" <%= task.status === 'todo' ? 'selected' : '' %>>Chờ làm (To Do)</option>
+                <option value="in_progress" <%= task.status === 'in_progress' ? 'selected' : '' %>>Đang làm (In Progress)</option>
+                <option value="review" <%= task.status === 'review' ? 'selected' : '' %>>Chờ duyệt (Review)</option>
+                <option value="done" <%= task.status === 'done' ? 'selected' : '' %>>Hoàn thành (Done)</option>
+              </select>
+            </form>
+          <% } else { %>
+            <div class="mb-2">
+              <div class="small text-muted mb-1">Trạng thái hiện tại:</div>
+              <% if (task.status === 'todo') { %>
+                <span class="badge badge-task-todo fs-6">Chờ làm (To Do)</span>
+              <% } else if (task.status === 'in_progress') { %>
+                <span class="badge badge-task-in_progress fs-6">Đang làm (In Progress)</span>
+              <% } else if (task.status === 'review') { %>
+                <span class="badge badge-task-review fs-6">Chờ duyệt (Review)</span>
+              <% } else if (task.status === 'done') { %>
+                <span class="badge badge-task-done fs-6">Hoàn thành (Done)</span>
+              <% } %>
+            </div>
+            <div class="text-muted small mt-2">
+              <i class="bi bi-info-circle me-1"></i>Chỉ người phụ trách hoặc Quản lý mới có quyền cập nhật trạng thái.
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white fw-bold">Thông tin chi tiết</div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="text-muted small">Người thực hiện</div>
+            <div class="fw-semibold mt-1 d-flex align-items-center gap-2">
+              <% if (task.assignee_name) { %>
+                <div class="avatar-circle" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                  <%= task.assignee_name.charAt(0).toUpperCase() %>
+                </div>
+                <span><%= task.assignee_name %></span>
+              <% } else { %>
+                <span class="text-muted">Chưa phân công</span>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="text-muted small">Người giao việc</div>
+            <div class="fw-semibold mt-1"><%= task.creator_name %></div>
+          </div>
+
+          <div class="mb-3">
+            <div class="text-muted small">Dự án</div>
+            <div class="mt-1">
+              <a href="/projects/<%= task.project_id %>" class="text-decoration-none fw-semibold">
+                [<%= task.project_code %>] <%= task.project_name %>
+              </a>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="text-muted small">Ngày bắt đầu</div>
+            <div class="mt-1"><%= task.start_date ? new Date(task.start_date).toLocaleDateString('vi-VN') : '--' %></div>
+          </div>
+
+          <div class="mb-3">
+            <div class="text-muted small">Hạn hoàn thành (Due date)</div>
+            <div class="mt-1 fw-bold <%= (task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done') ? 'text-danger' : '' %>">
+              <%= task.due_date ? new Date(task.due_date).toLocaleDateString('vi-VN') : '--' %>
+            </div>
+          </div>
+
+          <div class="border-top pt-3 text-muted small">
+            <div>Tạo lúc: <%= new Date(task.created_at).toLocaleString('vi-VN') %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>
+

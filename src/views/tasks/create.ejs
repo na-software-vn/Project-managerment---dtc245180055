@@ -1,0 +1,103 @@
+<%- include('../layouts/header') %>
+
+<div class="container-fluid p-0" style="max-width: 800px;">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Tạo Công Việc Mới</h3>
+      <p class="text-muted small mb-0">Thêm task và phân công cho thành viên trong dự án</p>
+    </div>
+    <a href="/tasks" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Quay lại
+    </a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <form action="/tasks/create" method="POST">
+        <input type="hidden" name="redirect_to" value="/tasks">
+        
+        <div class="row g-3">
+          <div class="col-md-12">
+            <label for="project_id" class="form-label fw-semibold">Thuộc dự án *</label>
+            <select class="form-select" id="project_id" name="project_id" required>
+              <option value="">-- Chọn dự án --</option>
+              <% projects.forEach(p => { %>
+                <option value="<%= p.id %>" <%= defaultProjectId == p.id ? 'selected' : '' %>>
+                  [<%= p.code %>] <%= p.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label for="title" class="form-label fw-semibold">Tiêu đề công việc *</label>
+            <input type="text" class="form-control" id="title" name="title" placeholder="VD: Lập trình giao diện đăng ký thành viên" required>
+          </div>
+
+          <div class="col-12">
+            <label for="description" class="form-label fw-semibold">Mô tả công việc</label>
+            <textarea class="form-control" id="description" name="description" rows="4" placeholder="Chi tiết yêu cầu, link tài liệu hoặc tiêu chí hoàn thành..."></textarea>
+          </div>
+
+          <div class="col-md-6">
+            <label for="status" class="form-label fw-semibold">Trạng thái</label>
+            <select class="form-select" id="status" name="status">
+              <option value="todo" selected>Chờ làm (To Do)</option>
+              <option value="in_progress">Đang làm (In Progress)</option>
+              <option value="review">Chờ duyệt (Review)</option>
+              <option value="done">Hoàn thành (Done)</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="priority" class="form-label fw-semibold">Độ ưu tiên</label>
+            <select class="form-select" id="priority" name="priority">
+              <option value="low">Thấp</option>
+              <option value="medium" selected>Trung bình</option>
+              <option value="high">Cao</option>
+              <option value="urgent">Khẩn cấp</option>
+            </select>\4
+            
+          </div>
+
+          <div class="col-md-6">
+            <label for="assigned_to" class="form-label fw-semibold">Giao việc cho</label>
+            <select class="form-select" id="assigned_to" name="assigned_to">
+              <option value="">-- Chưa giao ai --</option>
+              <% users.forEach(u => { %>
+                <option value="<%= u.id %>"><%= u.name %> (<%= u.email %> - <%= u.department %>)</option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="progress" class="form-label fw-semibold">Tiến độ (%)</label>
+            <input type="number" class="form-control" id="progress" name="progress" min="0" max="100" value="0">
+          </div>
+
+          <div class="col-md-6">
+            <label for="start_date" class="form-label fw-semibold">Ngày bắt đầu</label>
+            <input type="date" class="form-control" id="start_date" name="start_date">
+          </div>
+
+          <div class="col-md-6">
+            <label for="due_date" class="form-label fw-semibold">Hạn hoàn thành</label>
+            <input type="date" class="form-control" id="due_date" name="due_date">
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-end gap-2">
+          <a href="/tasks" class="btn btn-outline-secondary">Hủy bỏ</a>
+          <button type="submit" class="btn btn-primary px-4 fw-semibold">
+            <i class="bi bi-check2-circle me-1"></i> Lưu Công Việc
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../layouts/footer') %>
+
