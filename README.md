@@ -157,6 +157,11 @@ Hệ thống thiết lập ràng buộc quyền hạn nghiêm ngặt ở cả **
 | **Quản Trị phpMyAdmin (Khuyến nghị)** | [https://localhost/phpmyadmin/](https://localhost/phpmyadmin/) | Tích hợp qua Nginx HTTPS, không lo lỗi trình duyệt ép HTTPS |
 | **Quản Trị phpMyAdmin (Cổng trực tiếp)** | [http://localhost:8085](http://localhost:8085) hoặc `http://127.0.0.1:8085` | Cổng Apache gốc của container phpMyAdmin |
 | **MySQL Server** | `localhost:3306` | Cổng kết nối CSDL trực tiếp |
+| **Grafana Dashboard** | [http://localhost:3000](http://localhost:3000) | Giao diện trực quan hóa đồ thị giám sát (User: `admin` / Pass: `admin`) |
+| **Prometheus Server** | [http://localhost:9090](http://localhost:9090) | Máy chủ thu thập chuỗi thời gian (Time-series metrics) |
+| **cAdvisor (Giám sát Container)** | [http://localhost:8081](http://localhost:8081) | Thu thập CPU, RAM, Network của từng Docker Container |
+| **MySQL Exporter** | [http://localhost:9104/metrics](http://localhost:9104/metrics) | Đầu mối xuất metrics trạng thái CSDL MySQL |
+| **Web App Metrics** | [http://localhost:5000/metrics](http://localhost:5000/metrics) | Đầu mối xuất metrics ứng dụng Node.js Express (`prom-client`) |
 
 > ⚠️ **Lưu ý khi vào `https://localhost` lần đầu**: Vì sử dụng chứng chỉ SSL tự ký (Self-signed) cho môi trường nội bộ, trình duyệt sẽ hiển thị cảnh báo riêng tư. Bạn chỉ cần chọn **Nâng cao (Advanced) &rarr; Tiếp tục truy cập localhost (Proceed to localhost)** để vào ứng dụng.
 

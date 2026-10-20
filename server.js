@@ -3,6 +3,7 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
 const path = require('path');
+const client = require('prom-client');
 require('dotenv').config();
 
 const { testConnection } = require('./src/config/db');
@@ -14,6 +15,46 @@ const PORT = process.env.PORT || 5000;
 
 // Trust reverse proxy (Nginx)
 app.set('trust proxy', 1);
+
+// Initialize Prometheus metrics collection
+client.collectDefaultMetrics({ prefix: 'nodejs_' });
+
+const httpRequestDurationMicroseconds = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status_code'],
+  buckets: [0.05, 0.1, 0.2, 0.5, 1, 2, 5]
+});
+
+const httpRequestsTotal = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status_code']
+});
+
+// Middleware to record request metrics
+app.use((req, res, next) => {
+  if (req.path === '/metrics') return next();
+  const start = process.hrtime();
+  res.on('finish', () => {
+    const diff = process.hrtime(start);
+    const duration = diff[0] + diff[1] / 1e9;
+    const route = req.baseUrl || req.path || 'unknown';
+    httpRequestDurationMicroseconds.labels(req.method, route, res.statusCode).observe(duration);
+    httpRequestsTotal.labels(req.method, route, res.statusCode).inc();
+  });
+  next();
+});
+
+// Metrics endpoint for Prometheus scraping
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', client.register.contentType);
+    res.end(await client.register.metrics());
+  } catch (err) {
+    res.status(500).end(err.message);
+  }
+});
 
 // Body Parsers
 app.use(express.urlencoded({ extended: true }));

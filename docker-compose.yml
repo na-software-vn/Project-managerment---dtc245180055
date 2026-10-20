@@ -63,7 +63,6 @@ services:
       - "5000:5000"
     volumes:
       - .:/usr/src/app
-      - /usr/src/app/node_modules
     networks:
       - pm_network
 
@@ -82,8 +81,103 @@ services:
     networks:
       - pm_network
 
+  # ==========================================
+  # HỆ THỐNG GIÁM SÁT (PROMETHEUS + GRAFANA)
+  # ==========================================
+
+  # 1. Prometheus Server (Thu thập số liệu định kỳ)
+  pm_prometheus:
+    image: prom/prometheus:latest
+    container_name: pm_prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - pm_prometheus_data:/prometheus
+    networks:
+      - pm_network
+
+  # 2. Grafana Dashboard (Giao diện trực quan hóa đồ thị)
+  pm_grafana:
+    image: grafana/grafana:latest
+    container_name: pm_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - pm_grafana_data:/var/lib/grafana
+    depends_on:
+      - pm_prometheus
+    networks:
+      - pm_network
+
+  # 3. cAdvisor (Giám sát chỉ số CPU/RAM/Mạng của toàn bộ Container)
+  pm_cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: pm_cadvisor
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - pm_network
+
+  # 4. MySQL Exporter (Giám sát Database: Truy vấn, kết nối, bộ đệm)
+  pm_mysql_exporter:
+    image: prom/mysqld-exporter:v0.14.0
+    container_name: pm_mysql_exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "pm_user:pm_password@(pm_mysql:3306)/project_manager_db"
+    ports:
+      - "9104:9104"
+    depends_on:
+      pm_mysql:
+        condition: service_healthy
+    networks:
+      - pm_network
+
+  # 5. Node Exporter (Giám sát Phần cứng máy chủ Host: CPU, RAM, Disk cho Dashboard 1860)
+  pm_node_exporter:
+    image: prom/node-exporter:latest
+    container_name: pm_node_exporter
+    restart: unless-stopped
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "9100:9100"
+    networks:
+      - pm_network
+
 volumes:
   pm_mysql_data:
+  pm_prometheus_data:
+  pm_grafana_data:
 
 networks:
   pm_network:

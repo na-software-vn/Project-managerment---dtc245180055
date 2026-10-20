@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+scrape_configs:
+  # 1. Giám sát Ứng dụng Web Node.js Express (Request, Latency, Memory, EventLoop)
+  - job_name: 'pm_app'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['pm_app:5000']
+        labels:
+          app: 'project_manager'
+          service: 'web_backend'
+
+  # 2. Giám sát Database MySQL (Queries, Connections, Buffer Pool)
+  - job_name: 'pm_mysql'
+    static_configs:
+      - targets: ['pm_mysql_exporter:9104']
+        labels:
+          app: 'project_manager'
+          service: 'mysql_database'
+
+  # 3. Giám sát toàn bộ Docker Container (CPU, Memory, Network của từng container)
+  - job_name: 'pm_cadvisor'
+    static_configs:
+      - targets: ['pm_cadvisor:8080']
+        labels:
+          app: 'project_manager'
+          service: 'docker_containers'
+
+  # 4. Giám sát Phần cứng máy chủ Host (Dành cho Dashboard 1860 Node Exporter Full)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['pm_node_exporter:9100']
+        labels:
+          app: 'project_manager'
+          service: 'host_node'
+
+  # 5. Giám sát chính Prometheus server
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
