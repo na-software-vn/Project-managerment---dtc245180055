@@ -5,14 +5,27 @@ const User = require('../models/User');
 const taskController = {
   async index(req, res) {
     try {
+      const currentUser = req.session.user;
       const { projectId, status, priority, assignedTo, search } = req.query;
-      const tasks = await Task.getAll({ projectId, status, priority, assignedTo, search });
-      const projects = await Project.getAll();
+
+      // Member can only view tasks assigned to them
+      const effectiveAssignedTo = currentUser.role === 'member' ? currentUser.id : assignedTo;
+
+      const tasks = await Task.getAll({ projectId, status, priority, assignedTo: effectiveAssignedTo, search });
+      
+      // For member, projects filter should only list projects they belong to
+      let projects;
+      if (currentUser.role === 'member') {
+        projects = await Project.getAll({ userId: currentUser.id });
+      } else {
+        projects = await Project.getAll();
+      }
+
       const users = await User.getAll();
-      const stats = await Task.getOverallStats();
+      const stats = await Task.getOverallStats(currentUser.role === 'member' ? currentUser.id : null);
 
       res.render('tasks/index', {
-        title: 'Quản Lý Công Việc (Tasks)',
+        title: currentUser.role === 'member' ? 'Công Việc Của Tôi' : 'Quản Lý Công Việc (Tasks)',
         tasks,
         projects,
         users,
@@ -21,7 +34,7 @@ const taskController = {
           projectId: projectId || '',
           status: status || 'all',
           priority: priority || 'all',
-          assignedTo: assignedTo || 'all',
+          assignedTo: effectiveAssignedTo || 'all',
           search: search || ''
         }
       });
@@ -106,10 +119,17 @@ const taskController = {
   async detail(req, res) {
     try {
       const { id } = req.params;
+      const currentUser = req.session.user;
       const task = await Task.getById(id);
 
       if (!task) {
         req.flash('error', 'Không tìm thấy công việc.');
+        return res.redirect('/tasks');
+      }
+
+      // Member can only view tasks assigned to them or created by them
+      if (currentUser.role === 'member' && task.assigned_to !== currentUser.id && task.created_by !== currentUser.id) {
+        req.flash('error', 'Bạn không có quyền xem công việc này (công việc không được giao cho bạn).');
         return res.redirect('/tasks');
       }
 
@@ -286,14 +306,31 @@ const taskController = {
     try {
       const { id } = req.params;
       const { content } = req.body;
-      const userId = req.session.user.id;
+      const currentUser = req.session.user;
+
+      const task = await Task.getById(id);
+      if (!task) {
+        req.flash('error', 'Không tìm thấy công việc.');
+        return res.redirect('/tasks');
+      }
+
+      // Phân quyền bình luận: Chỉ Admin, Quản lý, Người được giao việc hoặc Người tạo task
+      const canComment = currentUser.role === 'admin' || 
+                         currentUser.role === 'manager' || 
+                         task.assigned_to === currentUser.id || 
+                         task.created_by === currentUser.id;
+
+      if (!canComment) {
+        req.flash('error', 'Bạn không có quyền bình luận ở công việc này (Chỉ dành cho Admin, Quản lý và Người phụ trách).');
+        return res.redirect(`/tasks/${id}`);
+      }
 
       if (!content || content.trim() === '') {
         req.flash('error', 'Nội dung bình luận không được để trống.');
         return res.redirect(`/tasks/${id}`);
       }
 
-      await Task.addComment(id, userId, content.trim());
+      await Task.addComment(id, currentUser.id, content.trim());
       req.flash('success', 'Đã thêm bình luận.');
       res.redirect(`/tasks/${id}`);
     } catch (error) {

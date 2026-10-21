@@ -6,8 +6,13 @@ const projectController = {
   async index(req, res) {
     try {
       const { status, search } = req.query;
-      const projects = await Project.getAll({ status, search });
-      const overallStats = await Project.getOverallStats();
+      const currentUser = req.session.user;
+
+      // Nếu là Member: chỉ hiển thị các dự án mà mình được phân công tham gia
+      const filterUserId = currentUser.role === 'member' ? currentUser.id : null;
+
+      const projects = await Project.getAll({ status, search, userId: filterUserId });
+      const overallStats = await Project.getOverallStats(filterUserId);
 
       res.render('projects/index', {
         title: 'Quản Lý Dự Án',
@@ -83,6 +88,18 @@ const projectController = {
 
       const tasks = await Task.getByProjectId(id);
       const allUsers = await User.getAll();
+
+      // Nếu là Member: kiểm tra quyền truy cập (chỉ được xem dự án mình tham gia)
+      const currentUser = req.session.user;
+      if (currentUser.role === 'member') {
+        const isMember = (project.members || []).some(m => m.user_id === currentUser.id) ||
+                         project.created_by === currentUser.id ||
+                         (tasks || []).some(t => t.assigned_to === currentUser.id);
+        if (!isMember) {
+          req.flash('error', 'Bạn không có quyền truy cập vào dự án này (Bạn chưa được phân công vào dự án).');
+          return res.redirect('/projects');
+        }
+      }
 
       // Separate tasks by status for Kanban Board
       const kanban = {

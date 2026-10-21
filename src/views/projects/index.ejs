@@ -4,8 +4,8 @@
   <!-- Page Header -->
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
-      <h3 class="fw-bold mb-1">Danh Sách Dự Án</h3>
-      <p class="text-muted small mb-0">Quản lý và giám sát tất cả các dự án trong hệ thống</p>
+      <h3 class="fw-bold mb-1"><%= currentUser.role === 'member' ? 'Dự Án Của Tôi' : 'Danh Sách Dự Án' %></h3>
+      <p class="text-muted small mb-0"><%= currentUser.role === 'member' ? 'Các dự án bạn được phân công tham gia thực hiện' : 'Quản lý và giám sát tất cả các dự án trong hệ thống' %></p>
     </div>
     <div>
       <% if (currentUser.role === 'admin' || currentUser.role === 'manager') { %>
@@ -142,7 +142,7 @@
       <div class="text-muted">
         <i class="bi bi-folder-x fs-1 d-block mb-3 text-secondary"></i>
         <h5>Không tìm thấy dự án nào</h5>
-        <p class="small">Hãy thử tìm kiếm với từ khóa khác hoặc tạo dự án mới.</p>
+        <p class="small"><%= currentUser.role === 'member' ? 'Bạn hiện chưa được phân công vào dự án nào.' : 'Hãy thử tìm kiếm với từ khóa khác hoặc tạo dự án mới.' %></p>
         <% if (currentUser.role === 'admin' || currentUser.role === 'manager') { %>
           <a href="/projects/create" class="btn btn-primary mt-2">
             <i class="bi bi-plus-lg me-1"></i> Tạo Dự Án Mới

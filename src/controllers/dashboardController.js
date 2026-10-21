@@ -5,15 +5,17 @@ const User = require('../models/User');
 const dashboardController = {
   async index(req, res) {
     try {
-      const currentUserId = req.session.user.id;
+      const currentUser = req.session.user;
+      const currentUserId = currentUser.id;
+      const filterUserId = currentUser.role === 'member' ? currentUserId : null;
 
       // Overall stats
-      const projectStats = await Project.getOverallStats();
+      const projectStats = await Project.getOverallStats(filterUserId);
       const taskStats = await Task.getOverallStats();
       const allUsers = await User.getAll();
 
       // Recent projects
-      const recentProjects = await Project.getAll();
+      const recentProjects = await Project.getAll({ userId: filterUserId });
 
       // My assigned tasks
       const myTasks = await Task.getAll({ assignedTo: currentUserId });

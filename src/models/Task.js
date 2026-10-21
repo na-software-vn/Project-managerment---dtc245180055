@@ -144,8 +144,8 @@ const Task = {
     return result.insertId;
   },
 
-  async getOverallStats() {
-    const [stats] = await pool.query(`
+  async getOverallStats(assignedTo = null) {
+    let sql = `
       SELECT 
         COUNT(*) AS total_tasks,
         SUM(CASE WHEN status = 'todo' THEN 1 ELSE 0 END) AS todo,
@@ -154,7 +154,14 @@ const Task = {
         SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) AS done,
         SUM(CASE WHEN due_date < CURDATE() AND status != 'done' THEN 1 ELSE 0 END) AS overdue
       FROM tasks
-    `);
+      WHERE 1=1
+    `;
+    const params = [];
+    if (assignedTo) {
+      sql += ' AND assigned_to = ?';
+      params.push(assignedTo);
+    }
+    const [stats] = await pool.query(sql, params);
     return stats[0] || { total_tasks: 0, todo: 0, in_progress: 0, review: 0, done: 0, overdue: 0 };
   }
 };

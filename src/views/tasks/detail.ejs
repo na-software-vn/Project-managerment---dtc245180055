@@ -62,17 +62,6 @@
               <%= task.description || 'Chưa có mô tả chi tiết cho công việc này.' %>
             </div>
           </div>
-
-          <!-- Progress -->
-          <div class="mb-4">
-            <div class="d-flex justify-content-between small text-muted mb-1">
-              <span class="fw-semibold">Tiến độ công việc</span>
-              <span class="fw-bold text-primary"><%= task.progress || 0 %>%</span>
-            </div>
-            <div class="progress" style="height: 8px;">
-              <div class="progress-bar <%= task.progress === 100 ? 'bg-success' : 'bg-primary' %>" role="progressbar" style="width: <%= task.progress || 0 %>%;"></div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -107,17 +96,29 @@
             <% } %>
           </div>
 
-          <!-- Add Comment Form -->
-          <form action="/tasks/<%= task.id %>/comments" method="POST">
-            <div class="mb-2">
-              <textarea class="form-control" name="content" rows="3" placeholder="Nhập bình luận hoặc cập nhật tiến độ công việc..." required></textarea>
+          <!-- Add Comment Form / Read-only Notice -->
+          <% 
+            const canComment = currentUser.role === 'admin' || 
+                               currentUser.role === 'manager' || 
+                               task.assigned_to === currentUser.id || 
+                               task.created_by === currentUser.id;
+          %>
+          <% if (canComment) { %>
+            <form action="/tasks/<%= task.id %>/comments" method="POST">
+              <div class="mb-2">
+                <textarea class="form-control" name="content" rows="3" placeholder="Nhập nội dung trao đổi, thảo luận công việc..." required></textarea>
+              </div>
+              <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold">
+                  <i class="bi bi-send me-1"></i> Gửi bình luận
+                </button>
+              </div>
+            </form>
+          <% } else { %>
+            <div class="alert alert-light border small text-muted text-center py-2 mb-0">
+              <i class="bi bi-lock me-1 text-secondary"></i>Chế độ xem: Chỉ Admin, Quản lý và Người được giao công việc mới có quyền gửi bình luận.
             </div>
-            <div class="d-flex justify-content-end">
-              <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold">
-                <i class="bi bi-send me-1"></i> Gửi bình luận
-              </button>
-            </div>
-          </form>
+          <% } %>
         </div>
       </div>
     </div>

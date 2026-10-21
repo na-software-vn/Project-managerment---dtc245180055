@@ -60,7 +60,7 @@
             
           </div>
 
-          <div class="col-md-6">
+          <div class="col-md-12">
             <label for="assigned_to" class="form-label fw-semibold">Giao việc cho</label>
             <select class="form-select" id="assigned_to" name="assigned_to">
               <option value="">-- Chưa giao ai --</option>
@@ -68,11 +68,6 @@
                 <option value="<%= u.id %>"><%= u.name %> (<%= u.email %> - <%= u.department %>)</option>
               <% }) %>
             </select>
-          </div>
-
-          <div class="col-md-6">
-            <label for="progress" class="form-label fw-semibold">Tiến độ (%)</label>
-            <input type="number" class="form-control" id="progress" name="progress" min="0" max="100" value="0">
           </div>
 
           <div class="col-md-6">

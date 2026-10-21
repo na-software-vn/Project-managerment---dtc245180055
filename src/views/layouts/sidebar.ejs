@@ -1,7 +1,7 @@
 <aside class="sidebar d-flex flex-column flex-shrink-0 text-white p-3">
   <a href="/dashboard" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none px-2">
     <i class="bi bi-kanban-fill fs-3 text-primary me-2"></i>
-    <span class="fs-5 fw-bold tracking-tight">ProjectPro</span>
+    <span class="fs-5 fw-bold tracking-tight">Project Manager</span>
   </a>
   <hr class="text-secondary opacity-50 my-3">
   
@@ -24,12 +24,14 @@
         <span>Quản lý Công việc</span>
       </a>
     </li>
+    <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'manager')) { %>
     <li>
       <a href="/members" class="nav-link <%= currentPath.startsWith('/members') ? 'active' : '' %>">
         <i class="bi bi-people"></i>
         <span>Thành viên</span>
       </a>
     </li>
+    <% } %>
   </ul>
 
   <hr class="text-secondary opacity-50 my-3">

@@ -1,7 +1,7 @@
 const { pool } = require('../config/db');
 
 const Project = {
-  async getAll({ status, search } = {}) {
+  async getAll({ status, search, userId } = {}) {
     let sql = `
       SELECT p.*, 
              u.name AS creator_name,
@@ -13,6 +13,15 @@ const Project = {
       WHERE 1=1
     `;
     const params = [];
+
+    if (userId) {
+      sql += ` AND (
+        p.id IN (SELECT project_id FROM project_members WHERE user_id = ?)
+        OR p.created_by = ?
+        OR p.id IN (SELECT project_id FROM tasks WHERE assigned_to = ?)
+      )`;
+      params.push(userId, userId, userId);
+    }
 
     if (status && status !== 'all') {
       sql += ' AND p.status = ?';
@@ -124,16 +133,29 @@ const Project = {
     await pool.query('DELETE FROM project_members WHERE project_id = ? AND user_id = ?', [projectId, userId]);
   },
 
-  async getOverallStats() {
-    const [stats] = await pool.query(`
+  async getOverallStats(userId) {
+    let sql = `
       SELECT 
         COUNT(*) AS total_projects,
         SUM(CASE WHEN status = 'planning' THEN 1 ELSE 0 END) AS planning,
         SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
         SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
         SUM(CASE WHEN status = 'on_hold' THEN 1 ELSE 0 END) AS on_hold
-      FROM projects
-    `);
+      FROM projects p
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (userId) {
+      sql += ` AND (
+        p.id IN (SELECT project_id FROM project_members WHERE user_id = ?)
+        OR p.created_by = ?
+        OR p.id IN (SELECT project_id FROM tasks WHERE assigned_to = ?)
+      )`;
+      params.push(userId, userId, userId);
+    }
+
+    const [stats] = await pool.query(sql, params);
     return stats[0] || { total_projects: 0, planning: 0, in_progress: 0, completed: 0, on_hold: 0 };
   }
 };
