@@ -7,10 +7,10 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: project_manager_db
-      MYSQL_USER: pm_user
-      MYSQL_PASSWORD: pm_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-project_manager_db}
+      MYSQL_USER: ${DB_USER:-pm_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "127.0.0.1:3306:3306"
     volumes:
@@ -19,7 +19,7 @@ services:
     networks:
       - backend_net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -34,7 +34,7 @@ services:
       PMA_HOST: pm_mysql
       PMA_PORT: 3306
       PMA_USER: root
-      PMA_PASSWORD: rootpassword
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 64M
     ports:
       - "127.0.0.1:8085:80"
@@ -56,10 +56,10 @@ services:
       NODE_ENV: production
       DB_HOST: pm_mysql
       DB_PORT: 3306
-      DB_USER: pm_user
-      DB_PASSWORD: pm_password
-      DB_NAME: project_manager_db
-      SESSION_SECRET: pm_secret_dtc245180055_production
+      DB_USER: ${DB_USER:-pm_user}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${DB_NAME:-project_manager_db}
+      SESSION_SECRET: ${SESSION_SECRET}
     ports:
       - "5000:5000"
     volumes:
@@ -111,8 +111,8 @@ services:
     container_name: pm_grafana
     restart: unless-stopped
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
     ports:
       - "3000:3000"
@@ -149,7 +149,7 @@ services:
     container_name: pm_mysql_exporter
     restart: unless-stopped
     environment:
-      DATA_SOURCE_NAME: "pm_user:pm_password@(pm_mysql:3306)/project_manager_db"
+      DATA_SOURCE_NAME: "${DB_USER:-pm_user}:${MYSQL_PASSWORD}@(pm_mysql:3306)/${DB_NAME:-project_manager_db}"
     ports:
       - "9104:9104"
     depends_on:
