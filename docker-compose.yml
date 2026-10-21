@@ -174,10 +174,48 @@ services:
     networks:
       - pm_network
 
+  # ==========================================
+  # HỆ THỐNG LOG TẬP TRUNG (LOKI + PROMTAIL)
+  # ==========================================
+
+  # 6. Loki Server (Lưu trữ và lập chỉ mục Log)
+  pm_loki:
+    image: grafana/loki:latest
+    container_name: pm_loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/loki-config.yaml
+      - pm_loki_data:/loki
+    command:
+      - -config.file=/etc/loki/loki-config.yaml
+    networks:
+      - pm_network
+
+  # 7. Promtail (Thu thập log Docker và đẩy vào Loki)
+  pm_promtail:
+    image: grafana/promtail:latest
+    container_name: pm_promtail
+    restart: unless-stopped
+    ports:
+      - "9080:9080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command:
+      - -config.file=/etc/promtail/config.yml
+    depends_on:
+      - pm_loki
+    networks:
+      - pm_network
+
 volumes:
   pm_mysql_data:
   pm_prometheus_data:
   pm_grafana_data:
+  pm_loki_data:
 
 networks:
   pm_network:

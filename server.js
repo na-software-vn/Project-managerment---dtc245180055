@@ -32,7 +32,7 @@ const httpRequestsTotal = new client.Counter({
   labelNames: ['method', 'route', 'status_code']
 });
 
-// Middleware to record request metrics
+// Middleware to record request metrics & logs
 app.use((req, res, next) => {
   if (req.path === '/metrics') return next();
   const start = process.hrtime();
@@ -42,6 +42,7 @@ app.use((req, res, next) => {
     const route = req.baseUrl || req.path || 'unknown';
     httpRequestDurationMicroseconds.labels(req.method, route, res.statusCode).observe(duration);
     httpRequestsTotal.labels(req.method, route, res.statusCode).inc();
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl || req.url} ${res.statusCode} (${(duration * 1000).toFixed(1)}ms)`);
   });
   next();
 });

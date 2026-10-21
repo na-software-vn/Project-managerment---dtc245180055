@@ -8,3 +8,10 @@ datasources:
     isDefault: true
     editable: true
 
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://pm_loki:3100
+    isDefault: false
+    editable: true
+
