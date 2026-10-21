@@ -12,12 +12,12 @@ services:
       MYSQL_USER: pm_user
       MYSQL_PASSWORD: pm_password
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - pm_mysql_data:/var/lib/mysql
       - ./sql/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
-      - pm_network
+      - backend_net
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
       interval: 5s
@@ -37,9 +37,10 @@ services:
       PMA_PASSWORD: rootpassword
       UPLOAD_LIMIT: 64M
     ports:
-      - "8085:80"
+      - "127.0.0.1:8085:80"
     networks:
-      - pm_network
+      - frontend_net
+      - backend_net
 
   pm_app:
     build:
@@ -64,7 +65,9 @@ services:
     volumes:
       - .:/usr/src/app
     networks:
-      - pm_network
+      - frontend_net
+      - backend_net
+      - monitoring_net
 
   pm_nginx:
     image: nginx:alpine
@@ -79,7 +82,7 @@ services:
     depends_on:
       - pm_app
     networks:
-      - pm_network
+      - frontend_net
 
   # ==========================================
   # HỆ THỐNG GIÁM SÁT (PROMETHEUS + GRAFANA)
@@ -100,7 +103,7 @@ services:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - pm_prometheus_data:/prometheus
     networks:
-      - pm_network
+      - monitoring_net
 
   # 2. Grafana Dashboard (Giao diện trực quan hóa đồ thị)
   pm_grafana:
@@ -119,7 +122,7 @@ services:
     depends_on:
       - pm_prometheus
     networks:
-      - pm_network
+      - monitoring_net
 
   # 3. cAdvisor (Giám sát chỉ số CPU/RAM/Mạng của toàn bộ Container)
   pm_cadvisor:
@@ -138,7 +141,7 @@ services:
     devices:
       - /dev/kmsg
     networks:
-      - pm_network
+      - monitoring_net
 
   # 4. MySQL Exporter (Giám sát Database: Truy vấn, kết nối, bộ đệm)
   pm_mysql_exporter:
@@ -153,7 +156,8 @@ services:
       pm_mysql:
         condition: service_healthy
     networks:
-      - pm_network
+      - backend_net
+      - monitoring_net
 
   # 5. Node Exporter (Giám sát Phần cứng máy chủ Host: CPU, RAM, Disk cho Dashboard 1860)
   pm_node_exporter:
@@ -172,7 +176,7 @@ services:
     ports:
       - "9100:9100"
     networks:
-      - pm_network
+      - monitoring_net
 
   # ==========================================
   # HỆ THỐNG LOG TẬP TRUNG (LOKI + PROMTAIL)
@@ -191,7 +195,7 @@ services:
     command:
       - -config.file=/etc/loki/loki-config.yaml
     networks:
-      - pm_network
+      - monitoring_net
 
   # 7. Promtail (Thu thập log Docker và đẩy vào Loki)
   pm_promtail:
@@ -209,7 +213,7 @@ services:
     depends_on:
       - pm_loki
     networks:
-      - pm_network
+      - monitoring_net
 
 volumes:
   pm_mysql_data:
@@ -218,5 +222,9 @@ volumes:
   pm_loki_data:
 
 networks:
-  pm_network:
+  frontend_net:
+    driver: bridge
+  backend_net:
+    driver: bridge
+  monitoring_net:
     driver: bridge
