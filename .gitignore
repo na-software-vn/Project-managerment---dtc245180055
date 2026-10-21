@@ -6,3 +6,4 @@ pm_mysql_data/
 
 docs/
 *.docx
+src/public/*.png
