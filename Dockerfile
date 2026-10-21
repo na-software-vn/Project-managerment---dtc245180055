@@ -7,8 +7,11 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# Copy source code
-COPY . .
+# Copy source code with ownership assigned to node user
+COPY --chown=node:node . .
+
+# Set non-root user
+USER node
 
 # Expose app port
 EXPOSE 5000
