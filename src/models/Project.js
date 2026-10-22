@@ -116,7 +116,16 @@ const Project = {
       FROM project_members pm
       JOIN users u ON pm.user_id = u.id
       WHERE pm.project_id = ?
-      ORDER BY FIELD(pm.role_in_project, 'leader', 'developer', 'tester', 'designer', 'viewer'), u.name ASC
+      ORDER BY 
+        CASE pm.role_in_project 
+          WHEN 'leader' THEN 1 
+          WHEN 'developer' THEN 2 
+          WHEN 'tester' THEN 3 
+          WHEN 'designer' THEN 4 
+          WHEN 'viewer' THEN 5 
+          ELSE 6 
+        END, 
+        u.name ASC
     `, [projectId]);
     return rows;
   },
@@ -125,7 +134,7 @@ const Project = {
     await pool.query(`
       INSERT INTO project_members (project_id, user_id, role_in_project)
       VALUES (?, ?, ?)
-      ON DUPLICATE KEY UPDATE role_in_project = VALUES(role_in_project)
+      ON CONFLICT (project_id, user_id) DO UPDATE SET role_in_project = EXCLUDED.role_in_project
     `, [projectId, userId, role]);
   },
 

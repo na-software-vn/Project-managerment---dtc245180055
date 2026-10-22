@@ -12,13 +12,13 @@ scrape_configs:
           app: 'project_manager'
           service: 'web_backend'
 
-  # 2. Giám sát Database MySQL (Queries, Connections, Buffer Pool)
-  - job_name: 'pm_mysql'
+  # 2. Giám sát Database PostgreSQL (Transactions, Queries, Connections)
+  - job_name: 'pm_postgres'
     static_configs:
-      - targets: ['pm_mysql_exporter:9104']
+      - targets: ['pm_postgres_exporter:9187']
         labels:
           app: 'project_manager'
-          service: 'mysql_database'
+          service: 'postgres_database'
 
   # 3. Giám sát toàn bộ Docker Container (CPU, Memory, Network của từng container)
   - job_name: 'pm_cadvisor'

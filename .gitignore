@@ -1,6 +1,8 @@
 node_modules/
 .env
 pm_mysql_data/
+pm_postgres_data/
+pm_pgadmin_data/
 .DS_Store
 *.log
 

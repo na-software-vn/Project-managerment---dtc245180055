@@ -1,43 +1,40 @@
 services:
-  pm_mysql:
-    image: mysql:8.0
-    container_name: pm_mysql
+  pm_postgres:
+    image: postgres:16-alpine
+    container_name: pm_postgres
     restart: unless-stopped
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME:-project_manager_db}
-      MYSQL_USER: ${DB_USER:-pm_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-project_manager_db}
+      POSTGRES_USER: ${DB_USER:-pm_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:5432:5432"
     volumes:
-      - pm_mysql_data:/var/lib/mysql
-      - ./sql/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - pm_postgres_data:/var/lib/postgresql/data
+      - ./sql/schema_pg.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - backend_net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pm_user} -d ${DB_NAME:-project_manager_db}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  pm_phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    container_name: pm_phpmyadmin
+  pm_pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pm_pgadmin
     restart: unless-stopped
     depends_on:
-      - pm_mysql
+      - pm_postgres
     environment:
-      PMA_HOST: pm_mysql
-      PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      UPLOAD_LIMIT: 64M
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-Admin_Pgadmin_Secur3_2026}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      SCRIPT_NAME: /pgadmin
     ports:
-      - "127.0.0.1:8085:80"
+      - "127.0.0.1:5050:80"
+    volumes:
+      - pm_pgadmin_data:/var/lib/pgadmin
     networks:
       - frontend_net
       - backend_net
@@ -49,15 +46,15 @@ services:
     container_name: pm_app
     restart: unless-stopped
     depends_on:
-      pm_mysql:
+      pm_postgres:
         condition: service_healthy
     environment:
       PORT: 5000
       NODE_ENV: production
-      DB_HOST: pm_mysql
-      DB_PORT: 3306
+      DB_HOST: pm_postgres
+      DB_PORT: 5432
       DB_USER: ${DB_USER:-pm_user}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME:-project_manager_db}
       SESSION_SECRET: ${SESSION_SECRET}
     ports:
@@ -143,17 +140,17 @@ services:
     networks:
       - monitoring_net
 
-  # 4. MySQL Exporter (Giám sát Database: Truy vấn, kết nối, bộ đệm)
-  pm_mysql_exporter:
-    image: prom/mysqld-exporter:v0.14.0
-    container_name: pm_mysql_exporter
+  # 4. PostgreSQL Exporter (Giám sát Database: Truy vấn, kết nối, transactions)
+  pm_postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: pm_postgres_exporter
     restart: unless-stopped
     environment:
-      DATA_SOURCE_NAME: "${DB_USER:-pm_user}:${MYSQL_PASSWORD}@(pm_mysql:3306)/${DB_NAME:-project_manager_db}"
+      DATA_SOURCE_NAME: "postgresql://${DB_USER:-pm_user}:${DB_PASSWORD}@pm_postgres:5432/${DB_NAME:-project_manager_db}?sslmode=disable"
     ports:
-      - "9104:9104"
+      - "9187:9187"
     depends_on:
-      pm_mysql:
+      pm_postgres:
         condition: service_healthy
     networks:
       - backend_net
@@ -216,7 +213,8 @@ services:
       - monitoring_net
 
 volumes:
-  pm_mysql_data:
+  pm_postgres_data:
+  pm_pgadmin_data:
   pm_prometheus_data:
   pm_grafana_data:
   pm_loki_data:

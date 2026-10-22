@@ -129,15 +129,15 @@ app.use((err, req, res, next) => {
 async function startServer() {
   const dbOk = await testConnection();
   if (!dbOk) {
-    console.warn('⚠️ Warning: MySQL connection could not be established immediately. Check docker container pm_mysql.');
+    console.warn('⚠️ Warning: PostgreSQL connection could not be established immediately. Check docker container pm_postgres.');
   }
 
   app.listen(PORT, () => {
     console.log(`=======================================================`);
     console.log(`🚀 Hệ thống Quản lý Dự án đang chạy tại:`);
     console.log(`👉 Web App:    http://localhost:${PORT}`);
-    console.log(`👉 phpMyAdmin: http://localhost:8085`);
-    console.log(`👉 MySQL:      localhost:3306 (DB: ${process.env.DB_NAME || 'project_manager_db'})`);
+    console.log(`👉 pgAdmin:    http://localhost:5050`);
+    console.log(`👉 PostgreSQL: localhost:5432 (DB: ${process.env.DB_NAME || 'project_manager_db'})`);
     console.log(`=======================================================`);
   });
 }

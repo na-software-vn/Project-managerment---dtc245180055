@@ -42,7 +42,15 @@ const Task = {
       params.push(term, term);
     }
 
-    sql += ' ORDER BY FIELD(t.priority, "urgent", "high", "medium", "low"), t.due_date ASC, t.id DESC';
+    sql += ` ORDER BY 
+      CASE t.priority 
+        WHEN 'urgent' THEN 1 
+        WHEN 'high' THEN 2 
+        WHEN 'medium' THEN 3 
+        WHEN 'low' THEN 4 
+        ELSE 5 
+      END, 
+      t.due_date ASC, t.id DESC`;
 
     const [rows] = await pool.query(sql, params);
     return rows;
@@ -77,7 +85,15 @@ const Task = {
       FROM tasks t
       LEFT JOIN users u_assign ON t.assigned_to = u_assign.id
       WHERE t.project_id = ?
-      ORDER BY FIELD(t.priority, "urgent", "high", "medium", "low"), t.due_date ASC
+      ORDER BY 
+        CASE t.priority 
+          WHEN 'urgent' THEN 1 
+          WHEN 'high' THEN 2 
+          WHEN 'medium' THEN 3 
+          WHEN 'low' THEN 4 
+          ELSE 5 
+        END, 
+        t.due_date ASC
     `, [projectId]);
     return rows;
   },
@@ -152,7 +168,7 @@ const Task = {
         SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
         SUM(CASE WHEN status = 'review' THEN 1 ELSE 0 END) AS review,
         SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) AS done,
-        SUM(CASE WHEN due_date < CURDATE() AND status != 'done' THEN 1 ELSE 0 END) AS overdue
+        SUM(CASE WHEN due_date < CURRENT_DATE AND status != 'done' THEN 1 ELSE 0 END) AS overdue
       FROM tasks
       WHERE 1=1
     `;
